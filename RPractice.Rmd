@@ -1,0 +1,48 @@
+---
+title: "Practice"
+author: "Vanita Thompson"
+date: "2/1/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+This is the introduction.
+
+
+## Load Data
+
+Load mushroom data.
+
+```{r}
+mushrooms <- read.csv("https://archive.ics.uci.edu/ml/machine-learning-databases/mushroom/agaricus-lepiota.data",header = FALSE, sep = ",")
+```
+
+## Prepare Data
+
+Prepare the data.
+
+```{r}
+mushrooms <- subset(mushrooms, select = c(V1, V4, V6, V23))
+colnames(mushrooms) <- c("Class", "CapColor", "Odor", "Habitat")
+levels(mushrooms$Class) <- c("edible", "poisonous")
+levels(mushrooms$CapColor) <- c("buff", "cinnamon", "red", "gray", "brown", "pink", 
+"green", "purple", "white", "yellow")
+levels(mushrooms$Odor) <- c("almond", "creosote", "foul", "anise", "musty", "none", 
+"pungent", "spicy", "fishy")
+levels(mushrooms$Habitat) <- c("woods", "grasses", "leaves", "meadows", "paths", "urban", 
+"waste")
+```
+
+## Display Results
+
+Report the data.
+
+```{r}
+head(mushrooms)
+```
+
