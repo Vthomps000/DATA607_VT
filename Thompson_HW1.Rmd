@@ -1,0 +1,58 @@
+---
+title: "DATA 607 Homework 1"
+author: "Vanita Thompson"
+date: "2/2/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+This week 1 assignment will subset data provided by FiveThirtyEight located here:
+
+https://fivethirtyeight.com/features/what-do-men-think-it-means-to-be-a-man/
+
+The dataset can be found here:
+
+https://github.com/fivethirtyeight/data/tree/master/masculinity-survey
+
+Author's at FiveThirtyEight conducted a survey with over 1600 men on whether or not the #MeTOO
+movenment changed their view of masculinity.
+
+##Load Library
+
+```{r}
+library(plyr)
+```
+
+
+## Load Data
+
+Load masculinity data.
+
+```{r}
+x <- 'https://raw.githubusercontent.com/fivethirtyeight/data/master/masculinity-survey/raw-responses.csv'
+y <- data.frame(read.csv(url(x), header = FALSE))
+```
+
+## Prepare Data
+
+The data was subset to examine the salaries of heterosexual males that always pay when they take 
+women out on dates.
+
+```{r}
+Men <- y[, c(61,84,86,88,87,95)]
+colnames(Men) <- c("Pay","Orientation","Education","Salary","Location","Age")
+```
+
+## Display Results
+
+Display subsetted column.
+
+```{r}
+subset(Men, Pay == "Always" & Orientation == "Straight", select = c("Salary"))
+```
+
