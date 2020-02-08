@@ -1,0 +1,75 @@
+---
+title: "DATA 607 HW2"
+author: "Vanita Thompson"
+date: "2/8/2020"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Running this markdown
+
+1. Download the movies_data.sql file found in the Github repository and save it in your directory: https://github.com/Vthomps000/DATA607_VT/blob/master/movies_data.sql
+2. Start MySQLWorkbench and load the script movies_data.sql
+3. Set the movies schema as the default schema and run the script
+4. Run code below replacing user and password with your own credentials
+5. remove eval=FALSE from the chunk option
+
+## Loading required Libraries
+
+```{r}
+library(RMySQL)
+library(RMariaDB)
+```
+
+## Connecting to database server
+
+Connecting to the MySQL server:
+
+```{r include=FALSE}
+# Replace the below with your credentials
+user = 'root'
+password = 'password'
+```
+
+## Loading the movie data
+
+Load the movies data in the dataframe 'movies';
+
+```{r eval=FALSE}
+mydb = dbConnect(MySQL(), user = user, password = password, dbname = 'movies_data', host = 'localhost')
+movies <- dbGetQuery(mydb, "select * from movies")
+```
+## Displaying data
+
+There are 36 observations in this data set, 6 movies and 6 reviewers. Some values are NULL since not every participant has seen all of the movies.
+
+```{r eval=FALSE}
+summary(movies)
+movies
+```
+
+## Omitting null values
+
+Omit the NA values from the data:
+
+```{r eval=FALSE}
+movies <- na.omit(movies)
+```
+
+## Computing the Average
+
+```{r warning=FALSE, eval=FALSE}
+movies_avg_sql <- dbGetQuery(mydb, "select title, avg(rating) from movies group by title")
+movies_avg_sql
+```
+
+Mean sorted by title:
+
+```{r eval=FALSE}
+aggregate(movies[, 6], list(movies$title), mean)
+```
