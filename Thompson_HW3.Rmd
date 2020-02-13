@@ -1,0 +1,103 @@
+---
+title: "DATA605 HW3"
+author: "Vanita Thompson"
+date: "2/12/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#1. Using the 173 majors listed in fivethirtyeight.com’s College Majors dataset [https://fivethirtyeight.com/features/the-economic-guide-to-picking-a-college-major/], provide code that identifies the majors that contain either "DATA" or "STATISTICS"
+
+##Load data
+
+```{r}
+majors <- read.csv(url('https://raw.githubusercontent.com/fivethirtyeight/data/master/college-majors/majors-list.csv'), stringsAsFactors = F)
+str(majors)
+```
+
+## Majors containing data or statistics:
+
+```{r}
+majors$Major[grepl("DATA", majors$Major)]
+```
+
+```{r}
+majors$Major[grepl("STATISTICS", majors$Major)]
+```
+
+#2 Write code that transforms the data below:
+
+[1] "bell pepper"  "bilberry"     "blackberry"   "blood orange"
+
+[5] "blueberry"    "cantaloupe"   "chili pepper" "cloudberry"  
+
+[9] "elderberry"   "lime"         "lychee"       "mulberry"    
+
+[13] "olive"        "salal berry"
+
+Into a format like this:
+
+c("bell pepper", "bilberry", "blackberry", "blood orange", "blueberry", "cantaloupe", "chili pepper", "cloudberry", "elderberry", "lime", "lychee", "mulberry", "olive", "salal berry")
+
+## Enter list values
+
+```{r}
+fruit_list <- '[1] "bell pepper"  "bilberry"     "blackberry"   "blood orange"
+
+[5] "blueberry"    "cantaloupe"   "chili pepper" "cloudberry"  
+
+[9] "elderberry"   "lime"         "lychee"       "mulberry"    
+
+[13] "olive"        "salal berry"'
+```
+
+##Load library
+
+```{r}
+library(stringr)
+```
+
+## unlist data
+
+```{r}
+foods <- str_extract_all(fruit_list, '[a-z]+\\s[a-z]+|[a-z]+')
+unlist(foods)
+```
+
+#3 Describe, in words, what these expressions will match:
+(.)\1\1
+
+The string ‘\1\1’ and the character before it, as long as it isn't a new line
+
+“(.)(.)\\2\\1”
+
+This could match anything like a 4 letter palindrome. one character, another character, the same as the 2nd character, the same as the first character, while surrounded by quotes.
+
+(..)\1
+
+This matches any two characters followed by the string ‘\1’
+
+“(.).\\1.\\1”
+
+This matches any character, followed by any other character, then the first character again, then any other character, then the first character again, while surrounded by quotes.
+
+"(.)(.)(.).*\\3\\2\\1"
+
+This would match any three characters and any or no characters in between the first 3 characters reversed, while surrounded by quotes.
+
+#4 Construct regular expressions to match words that:
+
+Start and end with the same character.
+
+(.)[a-z]*\\1
+
+Contain a repeated pair of letters (e.g. “church” contains “ch” repeated twice.)
+
+([a-z]{2})[a-z]*\\1
+
+Contain one letter repeated in at least three places (e.g. “eleven” contains three “e”s.)
+
+[a-z]*([a-z])[a-z]*\\1[a-z]*\\1[a-z]*
