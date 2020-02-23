@@ -1,0 +1,111 @@
+---
+title: "Project 1"
+author: "Vanita Thompson"
+date: "2/13/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+In this project, you’re given a text file with chess tournament results where the information has some structure. Your
+job is to create an R Markdown file that generates a .CSV file (that could for example be imported into a SQL database)
+with the following information for all of the players:
+Player’s Name, Player’s State, Total Number of Points, Player’s Pre-Rating, and Average Pre Chess Rating of Opponents
+For the first player, the information would be:
+Gary Hua, ON, 6.0, 1794, 1605
+1605 was calculated by using the pre-tournament opponents’ ratings of 1436, 1563, 1600, 1610, 1649, 1663, 1716, and
+dividing by the total number of games played.
+If you have questions about the meaning of the data or the results, please post them on the discussion forum. Data
+science, like chess, is a game of back and forth…
+The chess rating system (invented by a Minnesota statistician named Arpad Elo) has been used in many other contexts,
+including assessing relative strength of employment candidates by human resource departments.
+You may substitute another text file (or set of text files, or data scraped from web pages) of similar or greater
+complexity, and create your own assignment and solution. You may work in a small team. All of your code should be in
+an R markdown file (and published to rpubs.com); with your data accessible for the person running the script.
+
+
+Required Data: Player’s Name, Player’s State, Total Number of Points, Player’s Pre-Rating, and Average Pre Chess Rating of Opponents
+
+## Load the libraries 
+```{r}
+library(stringr)
+library(DT)
+library(data.table)
+```
+
+## Load the txt file
+
+```{r}
+tournament <- readLines("https://raw.githubusercontent.com/Vthomps000/DATA607_VT/master/tournamentinfo.txt")
+head(tournament)
+```
+
+From observation of the data table, we see that the text file is formatted in a way where the information is segmented into 2 lines. The first line contains player ID, name and points with win/loss information. The second line contains state and rating. I will first format the row data into 2 different sets, 1 set for each row. From there, I will extract the necessary information to a vector. Finally, I will combined these vectors to form a formatted database.
+
+## Subsetting the required data
+
+```{r}
+summary(tournament)
+```
+
+## Extracting relevant data by row: 
+
+```{r}
+name <- seq(5, 196, 3) 
+state_point <- seq(6, 196, 3) 
+```
+
+## Extracting player ID and points from name
+
+```{r}
+
+player <- as.integer(str_extract(tournament[name], "\\d+")) 
+
+name_player <- str_replace_all(str_extract(tournament[name],"([|]).+?\\1"),"[|]","") 
+
+points <- str_extract(tournament[name], "\\d.\\d") 
+```
+
+## Extracting State and rating
+
+```{r}
+state <- str_extract(tournament[state_point], "[A-Z]{2}" ) 
+rating <- as.integer(str_replace_all(str_extract(tournament[state_point], "R: \\s?\\d{3,4}"), "R:\\s", ""))
+```
+
+
+
+## combining the vectors to form the database
+
+```{r}
+new_tournament <- data.frame(player, name_player, state, points, rating) 
+head(new_tournament)
+```
+
+
+## Calculating average opponent rating:
+
+```{r}
+opponent <- str_extract_all(str_extract_all(tournament[name], "\\d+\\|"), "\\d+")
+avg_opp <- length(name)
+for (i in 1:length(name)) 
+{ 
+  avg_opp[i] <- round(mean(rating[as.numeric(unlist(opponent[player[i]]))]), digits = 0)
+}
+avg_opp
+```
+
+## Adding the avg variable to the new database. I named this database newtournamentinfo
+
+```{r}
+newtournamentinfo <- data.frame(player, name, state, points, rating, avg_opp)
+head(newtournamentinfo)
+```
+
+## Writing CSV
+
+```{r}
+write.csv(newtournamentinfo, file = "newtournamentinfo.csv")
+```
