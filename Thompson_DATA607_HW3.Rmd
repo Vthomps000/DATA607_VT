@@ -1,0 +1,160 @@
+---
+title: "DATA607 HW3"
+author: "Vanita Thompson"
+date: "2/12/2020"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#1. Using the 173 majors listed in fivethirtyeight.com’s College Majors dataset [https://fivethirtyeight.com/features/the-economic-guide-to-picking-a-college-major/], provide code that identifies the majors that contain either "DATA" or "STATISTICS"
+
+##Load data
+
+```{r}
+majors <- read.csv(url('https://raw.githubusercontent.com/fivethirtyeight/data/master/college-majors/majors-list.csv'), stringsAsFactors = F)
+str(majors)
+```
+
+## Majors containing data or statistics:
+
+```{r}
+majors$Major[grepl("DATA", majors$Major)]
+```
+
+```{r}
+majors$Major[grepl("STATISTICS", majors$Major)]
+```
+
+#2 Write code that transforms the data below:
+
+[1] "bell pepper"  "bilberry"     "blackberry"   "blood orange"
+
+[5] "blueberry"    "cantaloupe"   "chili pepper" "cloudberry"  
+
+[9] "elderberry"   "lime"         "lychee"       "mulberry"    
+
+[13] "olive"        "salal berry"
+
+Into a format like this:
+
+c("bell pepper", "bilberry", "blackberry", "blood orange", "blueberry", "cantaloupe", "chili pepper", "cloudberry", "elderberry", "lime", "lychee", "mulberry", "olive", "salal berry")
+
+## Enter list values
+
+```{r}
+fruit_list <- '[1] "bell pepper"  "bilberry"     "blackberry"   "blood orange"
+
+[5] "blueberry"    "cantaloupe"   "chili pepper" "cloudberry"  
+
+[9] "elderberry"   "lime"         "lychee"       "mulberry"    
+
+[13] "olive"        "salal berry"'
+```
+
+##Load library
+
+```{r}
+library(stringr)
+```
+
+## unlist data
+
+```{r}
+foods <- str_extract_all(fruit_list, '[a-z]+\\s[a-z]+|[a-z]+')
+unlist(foods)
+```
+
+#3 Describe, in words, what these expressions will match:
+(.)\1\1
+
+Any character repeated 3 times in a row 
+
+```{r}
+test_vec <- c("aaa", "aaba" , "abcdef" , "thbbbht")
+nums <- unlist(str_extract_all(test_vec, "(.)\\1\\1"))
+nums
+```
+
+
+“(.)(.)\\2\\1”
+
+Two characters followed by the first two in reverse order
+
+```{r} 
+test_vec2 <- c("aabbaa", "aaba" , "abcdef")
+nums2 <- unlist(str_extract_all(test_vec2, "(.)(.)\\2\\1"))
+nums2
+```
+
+(..)\1
+
+Two characters repeated twice.
+
+```{r}
+test_vec3 <- c("dodo", "ketchup" , "banana" , "cookie")
+nums3 <- unlist(str_extract_all(test_vec3, "(..)\\1"))
+nums3
+```
+
+
+“(.).\\1.\\1”
+
+A character repeated three times with characters in between each repitition, e.g. abaca
+
+```{r}
+test_vec4 <- c("avocado", "cadaea" , "banana" , "cookie")
+nums4 <- unlist(str_extract_all(test_vec4, "(.).\\1.\\1"))
+nums4
+```
+
+
+"(.)(.)(.).*\\3\\2\\1"
+
+The characters followed by any character repeate 0 or more times and then then the same three characters in reverse order.
+
+```{r}
+test_vec5 <- c("abc312131cba", "pizza", "bananaracecar" , "cookie")
+nums5 <- unlist(str_extract_all(test_vec5, "(.)(.)(.).*\\3\\2\\1"))
+nums5
+```
+
+#4 Construct regular expressions to match words that:
+
+Start and end with the same character.
+
+^(.).*\\1$
+
+```{r}
+test_vec6 <- c("abc312131cba", "pizza", "icecream" , "cookie")
+nums6 <- str_extract(test_vec6, '^(.).*\\1$')
+unlist(nums6)
+```
+
+ 
+Contain a repeated pair of letters (e.g. “church” contains “ch” repeated twice.)
+
+(..).*\\1
+
+```{r}
+test_vec7 <- c("church", "bus", "river" , "mississippi")
+nums7 <- str_extract_all(test_vec7, '(..).*\\1')
+unlist(nums7)
+```
+
+
+Contain one letter repeated in at least three places (e.g. “eleven” contains three “e”s.)
+
+([a-z]).*\\1.*\\1
+
+```{r}
+test_vec8 <- c("church", "eleven", "river" , "mississippi")
+nums8 <- str_extract_all(test_vec8, '([a-z]).*\\1.*\\1')
+unlist(nums8)
+```
+
