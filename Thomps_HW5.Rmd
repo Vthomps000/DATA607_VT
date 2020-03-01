@@ -1,0 +1,117 @@
+---
+title: "DATA607 HW 5"
+author: "Vanita Thompson"
+date: "2/28/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Tidying and Transforming Data
+
+## Loading Libraries
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(scales)
+```
+
+
+## CSV File
+
+Data was entered in a csv file called thomps_HW5.csv
+
+## Reading Data in R 
+
+    CSV read into R from github.
+    
+```{r}
+url <- "https://raw.githubusercontent.com/Vthomps000/DATA607_VT/master/thomps_HW5.csv"
+dfuntidy <- read_csv(url)
+dfuntidy
+tbuntidy<-tbl_df(dfuntidy)
+tbuntidy
+```
+
+## Data Transformation 
+
+    We transform the data by first reshaping a wide table to a tidy table with variables
+    as columns and observations as rows.
+
+```{r}
+tblTidy<-gather(dfuntidy,"Destinations","Flights",3:7)
+tblTidy
+```
+
+    Next, we identify blanks and select all rows without blank values only, rename columns, 
+    fill in missing info, create and match a new destination column with counts, and split 
+    the status column.
+
+```{r}
+blanks <- seq(3,nrow(dfuntidy),3)
+clean <- dfuntidy %>% slice(-blanks) %>% rename("airline" = X1, "status" = X2)
+for (i in seq(from=2, to=nrow(clean), by=2)) {
+  clean[i,1] <- clean[i-1,1]
+}  
+cleaner <- clean %>% gather(`Los Angeles`:`Seattle`, key = destination, value = counts)
+tidy <- cleaner %>% spread(status, counts)
+```
+
+    The data is now tidy. Every column is a variable, where each row represents an observation,
+    and every value has a cell.
+
+## Analysis of Flight Arrivals and Delays
+
+```{r}
+tidy
+```
+
+    Using the tidy table with groups we can compare both airlines arrival times. The table 
+    shows that AM West has more delayed flights than Alaska, but also has more on time. Since
+    AM West has more flights than Alaska, we can compare is using ratios. Using pipes and mutate,
+    We add a column of total flights and arrange them in descending order
+
+```{r}
+flights <- tidy %>% mutate(totalflights = delayed + `on time`) %>% arrange(desc(totalflights, 'on time', delayed))
+flights
+```
+
+    To compare arrival ratios we can mutate our final table again to add a ratio column 
+    for delayed flights (dratio) and on time flights (otratio)
+
+```{r}
+flights2 <- flights %>% mutate(dratio = delayed/totalflights, otratio = 1-dratio)
+flights2
+```
+
+    From the ratio shown above we discover that Alaska has more delayed flights, with 14.2% of 
+    its flights being delayed against 7.9% of AM West flights being delayed. We can also confirm
+    Alaska has more on time flights overall by grouping and descending the on time ratios by destination.
+
+```{r}
+ot_flights <- flights2 %>% 
+  arrange(destination, desc(otratio)) %>% 
+  group_by(destination)  %>% 
+  select(-delayed:-dratio)
+
+ot_flights
+```
+
+##  Conclusion
+
+    The ggplot graph supports our analysis of flight arrival times. Flights with Alaska
+    face less delays than flights with AM West.
+
+```{r}
+ggplot(data=ot_flights, aes(x=reorder(destination, -otratio), y=otratio, fill=airline)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  scale_y_continuous(labels = percent, breaks=seq(0,1,.1)) +
+  scale_fill_brewer(palette="Blues") + theme_minimal() +
+  labs(title="% of on time flights by destination", y = " % On Time Flights ", x = "Destination") 
+```
+
