@@ -1,0 +1,96 @@
+---
+title: "Project 2B"
+author: "Vanita Thompson"
+date: "3/4/2020"
+output:
+  html_document: default
+  html_notebook: default
+  pdf_document: default
+---
+## Objective
+
+The goal of this assignment is to give you practice in preparing different datasets for downstream
+analysis work. I am using data on the cost of some popular WW2 airplanes. Since cost typically declines, 
+I hope to show a decrease in the costs of airplanes overtime. 
+
+## Load the Libraries
+
+```{r setup, message=FALSE, warning=FALSE, comment = NA}
+library(dplyr)
+library(tidyr)
+library(magrittr)
+library(stringr)
+library(zoo)
+require(ggplot2)
+require(ggthemes)
+library(extrafont)
+``` 
+
+## Data Import
+
+I copied this file from the web site linked below, and created a CSV file. I uploaded the file to github and I will read the untidy data into R. 
+https://www.ibiblio.org/hyperwar/AAF/StatDigest/aafsd-3.html
+
+
+```{r load, message=FALSE, warning=FALSE, comment = NA}
+untidy= read.csv(file="https://raw.githubusercontent.com/Vthomps000/DATA607_VT/master/AirplaneCost.csv",header=TRUE,sep="\t",na.strings=c("","NA"))
+head(untidy)
+```
+
+## Data Transformation
+
+The data is in a poor format. There is missing/blank data. There is inconsistant notation, and empty cells. The currency symbol is used irregularly. I will tidy up this data and reorganize it with tidyr and dplyr.
+
+```{r}
+untidy$Type=na.locf(untidy$Type)
+untidy$Type = str_trim(untidy$Type)
+untidy$Model = str_trim(untidy$Model)
+untidy$Type=as.factor(untidy$Type)
+untidy$Model= as.factor(untidy$Model)
+untidy = gather(untidy,Year,Cost,X1941:X1945)
+untidy$Model[untidy$Model==""] <- NA
+untidy$Model= as.factor(untidy$Model)
+untidy$Year=str_replace(untidy$Year,"X","")
+untidy$Year=as.factor(untidy$Year)
+untidy$Cost=str_replace(untidy$Cost,",","")
+untidy$Cost=as.numeric(untidy$Cost)
+untidy = untidy[complete.cases(untidy$Model),]
+write.csv(untidy,"Tidy_AirplaneCost.csv", row.names=FALSE)
+head(untidy,6)
+untidy
+```
+
+## Data Analysis 
+
+I am comparing the data to show the decrease in cost of some fighter and bomber airplanes
+
+```{r graphic, message=FALSE, warning=FALSE}
+target=c("P-38","P-40","P-47","P-51")
+fighter=filter(untidy,Model %in%target)   #filtering fighter planes
+g=ggplot(data=fighter,aes(x=Year,y=Cost*0.001,group = Model, color = Model))
+g=g+geom_line(stat="identity",size=1.6)
+g=g+ggtitle("Cost of Fighters")
+g=g+ylab("Cost ($K)")+xlab("Year")
+g=g+theme_get()
+g=g+theme(plot.title = element_text(hjust = 0.5),text=element_text(size=13, family="Times"))
+g
+```
+
+
+Now I will compare the data with the Bomber planes.
+
+```{r graphic2,message=FALSE, warning=FALSE}
+target=c("B-17","B-24", "B-25", "B-26")
+bomber=filter(untidy,Model %in%target)   #filtering bomber planes
+g=ggplot(data=na.omit(bomber),aes(x=Year,y=Cost*0.001,group = Model, color = Model))
+g=g+geom_line(stat="identity",size=1.6)
+g=g+ggtitle("Cost of Bombers")
+g=g+ylab("Cost ($K)")+xlab("Year")
+g=g+theme_get()
+g=g+theme(plot.title = element_text(hjust = 0.5),text=element_text(size=13, family="Times"))
+g
+```
+
+## Conclusion
+
+The data and graph confirm my original hypothesis. The cost of the airplanes dramatically decreased over time.

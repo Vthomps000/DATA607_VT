@@ -1,0 +1,92 @@
+---
+title: "Untitled"
+author: "Vanita Thompson"
+date: "3/8/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading Libraries
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+```
+
+
+## CSV Data
+
+Data was entered from https://www.usclimatedata.com/ in a csv file called ClimateData.csv using the wide format given
+
+## Read CSV into R, tidy and transform data
+
+CSV read into R
+
+```{r}
+dfWide<-read.csv(file="https://raw.githubusercontent.com/Vthomps000/DATA607_VT/master/ClimateData.csv")
+dfWide
+tbWide<-tbl_df(dfWide)
+tbWide
+```
+
+## Data Transformation
+
+We reshape the data by going from a wide table to a tidy table with variables as columns and observations as rows, and renaming the x column.
+
+```{r}
+clean <- dfWide %>% rename("Climate" = X)
+
+clean
+```
+
+I transformed the data by organizing the 5 columns by month (as rows) to better visualize the climate data.
+
+```{r}
+cleaner <- clean %>% gather(`Jan`:`Dec`, key = Month , value = counts)
+```
+
+```{r}
+tidy <- cleaner %>% spread(Climate, counts)
+tidy
+```
+
+```{r}
+tidy$Month <- factor(tidy$Month, month.abb, ordered=TRUE)
+tidy[order(tidy$Month), ]
+```
+
+```{r}
+summary(tidy)
+```
+
+
+## Data Analysis and Visualization
+
+From the summary, there appears to be a relationship between average precipittion and hours of sunshine. 
+I grouped those variables and used ggplot to confirm.
+
+```{r}
+tidy2 <- tidy %>% group_by(Month, `Av. precipitation in inch` ) %>% summarise(`Hours of sunshine`)
+
+tidy2
+```
+
+```{r}
+g=ggplot(tidy2, aes(x=`Av. precipitation in inch`,y=`Hours of sunshine`,group = Month, color = Month))
+g=g+geom_point(stat="identity",size=8)
+g=g+ggtitle("Precipitation Due to Sunshine")
+g=g+ylab("Hours of Sunshine")+xlab("Av. precipitation in inch")
+g=g+theme_get()
+g=g+theme(plot.title = element_text(hjust = 0.5),text=element_text(size=13))
+g  
+
+g
+```
+
+
+

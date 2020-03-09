@@ -1,0 +1,96 @@
+---
+title: "Project 2C"
+author: "Vanita Thompson"
+date: "3/8/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Assignment Description
+
+Our task is to read in a .csv file and tidy the dataset. 
+
+## Libraries
+
+Load required libraries
+```{r message=FALSE, warning=FALSE}
+library(readr)
+library(dplyr)
+library(tidyr)
+library(knitr)
+library(tibble)
+library(ggplot2)
+library(scales)
+library(kableExtra)
+```
+
+## Data Import
+
+I copied this file from the web site linked below, and created a CSV file. I uploaded the file to github and I will read the untidy data into R. 
+https://towardsdatascience.com/whats-tidy-data-how-to-organize-messy-datasets-in-python-with-melt-and-pivotable-functions-5d52daa996c9
+
+Read the .csv file from a github link
+```{r message=FALSE, warning=FALSE}
+url <- "https://raw.githubusercontent.com/Vthomps000/DATA607_VT/master/religion.csv"
+untidy <- read_csv(url)
+untidy <- as.tibble(untidy)
+untidy
+```
+
+## Data Evaluation
+
+Began by renaming an unecessary column
+```{r}
+clean <- untidy %>% rename(" " = X1)
+clean
+```
+
+Reshaped the data
+
+```{r}
+cleaner <- clean %>% gather(`<10k`:`refused`, key = income, value = counts) %>% rename("Frequency" = counts) %>% select(religion, income, Frequency) %>%
+arrange(religion)
+
+cleaner
+```
+
+
+
+## Data Analysis & Visualization
+
+I started by visualizing the whole data set. I found that most of the survey was conducted by Catholics so I decided to focus on them.
+
+```{r}
+target=c("<10k","10-20k","20-30k","30-40k", "40-50k", "50-75k", "75-100k", "100-150k", ">150k", "refused")
+religion=filter(cleaner,income %in%target)   #filtering fighter planes
+g=ggplot(data=religion,aes(x=income,y=Frequency ,group = religion, color = religion))
+g=g+geom_line(stat="identity",size=1.6)
+g=g+ggtitle("Income by religion")
+g=g+ylab("# of People")+xlab("Income")
+g=g+theme_get()
+g=g+theme(plot.title = element_text(hjust = 0.5),text=element_text(size=13))
+g
+```
+
+```{r}
+religion2<- cleaner %>% select(religion, income, Frequency) %>%
+  filter(religion == "Catholic")
+religion2
+```
+
+```{r}
+summary(religion2)
+```
+
+
+
+
+## Conclusion
+
+I was abe to tidy the data set.
+
+
