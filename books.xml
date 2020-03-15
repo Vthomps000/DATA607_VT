@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<books>
+  <book>
+    <title>The Subtle Art of Not Giving a F*ck: A Counterintuitive Approach to Living a Good Life</title>
+    <author>Mark Manson</author>
+    <yearpub>2016</yearpub>
+    <pages>224</pages>
+    <price>23.95</price>
+  </book>
+  <book>
+    <title>The Art of Seduction</title>
+    <author>Robert Greene</author>
+    <yearpub>2001</yearpub>
+    <pages>468</pages>
+    <price>24.49</price>
+  </book>
+  <book>
+    <title>Disarming the Narcissist: Surviving and Thriving with the Self-Absorbed</title>
+    <author>
+      <first>Wendy T. Behary</first>
+      <second>Daniel J. Siegel</second>
+    </author>
+    <yearpub>2013</yearpub>
+    <pages>249</pages>
+    <price>20.99</price>
+  </book>
+</books>
