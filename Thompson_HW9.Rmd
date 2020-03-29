@@ -1,0 +1,141 @@
+---
+title: "Data 607 HW 9"
+author: "Vanita Thompson"
+date: "3/22/2020"
+output:
+  html_document:
+    highlight: pygments
+    theme: cerulean
+    toc: yes
+    toc_float: yes
+  pdf_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Assignment 9
+
+Creating an interface with the NY Times API and read in the json data to extract some information to be stored in a data frame.
+
+## Loading Libraries
+
+Load required libraries
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(httr)
+library(kableExtra)
+library(readxl)
+```
+
+Displaying tables
+
+```{r}
+showtable <- function(data, title) {
+  kable(data, caption = title) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), latex_options = "scale_down")
+}
+```
+
+## NYT API
+
+```{r include=FALSE}
+api_key <- "ixPA0yrhgljRK7QBlv5ul7IuB2jnGa5h"
+```
+
+I use the url and api_key along with a query to request to the NYT API.
+
+```{r}
+url <- "https://api.nytimes.com/svc/search/v2/articlesearch.json?"
+key <- str_c("&api-key=", api_key)
+```
+
+get_article_info()
+
+Takeing in parsed responses from the API and extracting the information. There are 10 articles per page. Not all fields have values so we test for that case with the ifelse() function and assign missing values as NA.
+
+```{r}
+get_article_info <- function(parsed_response) {
+  
+  # initialize dataframe
+  df <- data.frame(headline=character(),
+                 author=character(), 
+                 pubdate=as.Date(character()),
+                 url=character(),
+                 stringsAsFactors=FALSE)
+  
+  # for each article per page, extract the information
+  for (i in 1:10) {
+    # get article
+    article <- parsed_response$response$docs[[i]]
+    # extract info
+    headline <- ifelse(is.null(article$headline$main), "NA",  article$headline$main)
+    author <- ifelse(is.null(article$byline$original), "NA",  article$byline$original)
+    pubdate <- article$pub_date
+    weburl <- article$web_url
+    # store in dataframe format
+    info <- data.frame(headline, author, pubdate, weburl)
+    names(info) <- names(df)
+    # append to dataframe
+    df <- rbind(df, info)
+  }
+  return(df)
+}
+```
+
+## Data Extraction
+
+Calling the `get_article_info()` function and feeding it the `parsed_response` info for each page. I arbitrarily limited the extraction to the first 10 pages of responses. The resulting query will  be the newest articles. 
+
+```{r}
+# initialize dataframe that will contain the 10 extracted article info for each response page
+articles <- data.frame(headline=character(),
+                       author=character(), 
+                       pubdate=as.Date(character()),
+                       url=character(),
+                       stringsAsFactors=FALSE)
+# iterate
+for (i in 1:10) {
+  # string the query and request together and send a request
+  query <- str_c("q=","new+york+times&page=", i, "&sort=newest")
+  request <- str_c(url, query, key)
+  nyt <- GET(request)
+  # parse the request
+  parsed_response <- content(nyt, "parse")
+  # call get_article_info function
+  article_info <- get_article_info(parsed_response)
+  # append to articles data frame
+  articles <- rbind(articles, article_info)
+}
+```
+
+## Data Frame
+
+```{r}
+showtable(head(articles), "Extracted Articles")
+```
+
+## Data Transformation
+
+Tidying and transformations.
+
+```{r}
+# remove By
+articles$author <- str_remove(articles$author, "By ")
+```
+
+Displaying the results of the transformation.
+
+```{r}
+showtable(articles, "Extracted Articles")
+```
+
+## Conclusion
+
+As shown in the table above, I was able to make specific requests to the NYT API containing a query for the newest articles. Then, I parsed the JSON responses and extracted my information of interest: headlines, authors, publication date, and web url. I tidyed and transformed the data to clean up the author column and split the publication date into year, month and day for further filtering. 
+
+ 
+
