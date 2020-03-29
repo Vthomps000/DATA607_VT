@@ -1,0 +1,117 @@
+---
+title: "DATA607 Tidyverse"
+author: "Vanita Thompson"
+date: "3/26/2020"
+output:
+  html_document: 
+    toc: yes
+    toc_collapsed: yes
+    toc_float: yes
+  md_document:
+      variant: markdown_github
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Tidyverse vignette with stringr
+
+
+The `stringr` package  is the package of choice for working with character strings in Tidyverse.
+
+We will be using the pipe notation `%>%`for the vignette.
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+```
+
+Load the data into R from Kaggle containing information about breweries in the United States from the following link: https://www.kaggle.com/brkurzawa/us-breweries/data .
+
+```{r}
+url <- 'https://raw.githubusercontent.com/Vthomps000/DATA607_VT/master/beer.csv'
+beer <- read.csv(url)
+head(beer)
+```
+
+# Detecting Matches
+
+Detecing pattern matches in a string using str_detect, which returns boolean values.
+
+```{r}
+b0 <- beer$address %>% str_detect("PO")
+head(b0)
+```
+
+```{r}
+head(beer[b0,])
+```
+
+## Detecting matches using str_which
+
+```{r}
+b1 <- beer$address %>% str_which("PO")
+head(b1)
+```
+
+We obtain the same result as above.
+
+```{r}
+head(beer[b1,])
+```
+
+## Mutating Strings
+
+Modifying/mutating strings.
+
+```{r}
+inc <- beer$brewery_name %>% str_which("INC.|inc.|Inc.|INC|inc|Inc")
+head(inc)
+```
+
+
+```{r}
+t1 <- beer %>% select(brewery_name) %>% slice(inc)
+head(t1)
+```
+
+```{r}
+beer$brewery_name <- beer$brewery_name %>% str_replace("INC.|inc.|Inc.|INC|inc|Inc", "Inc.")
+t2 <- beer %>% select(brewery_name) %>% slice(inc)
+head(t2)
+```
+
+```{r}
+t4 <- sapply(beer$address, function(x) str_to_upper(x))
+head(t4)
+```
+
+## Subseting Strings
+
+
+```{r}
+t5 <- beer$address %>% str_extract_all("([:digit:]{5})$")
+head(t5)
+```
+
+Joining and splitting strings.
+
+```{r}
+t6 <- beer$address %>% str_split(",")
+head(t6)
+```
+
+I concentrate individual strings into one single string.
+
+```{r}
+t7 <- sapply(t6, function(x) str_c(x, collapse = ","))
+head(t7)
+```
+
+## Conclusion
+
+The `stringr` package of Tidyverse was used to demonstarte the manipulation of  strings.
+ 
+## Citations
+ 
+Information came from,  the `stringr` cheatsheet on [github](https://github.com/rstudio/cheatsheets/blob/master/strings.pdf).
