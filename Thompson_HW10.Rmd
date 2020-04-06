@@ -1,0 +1,222 @@
+---
+title: "Untitled"
+author: "Vanita Thompson"
+date: "4/5/2020"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+For this assignment, I am tasked with getting an example from *Text Mining with R* running and then extending the example to a new corpus and a neew sentiment lexicon. Sections 1-6 are directly from *Text Mining with R*^1^. I attempted using a mendeley github, and encountered numerous errors.
+
+```{r}
+remotes::install_github("zeehio/mendeleyr")
+library(ggplot2)
+library(remotes)
+library(stringr)
+library(plyr)
+library(twitteR)
+# Mendeley only works with older versions of R, so using this package impacted my entire code.
+library(mendeleyr)
+require(rplos)
+```
+
+
+##Get number of papers with our terms
+
+```{r,  error=TRUE}
+tweets = searchTwitter("Mendeley", n=1500) 
+# I was unable to apply for a twritter dev acct, so I have no oauth
+setup_twitter_oauth("API key", "API secret")
+tweets_df = ldply(tweets, function(t) t$toDataFrame() )
+```
+
+
+
+# load the word lists
+```{r error=TRUE}
+surewords = scan('sure-words.txt', what = 'character', comment.char = ';')
+unsurewords = scan('unsure-words.txt', what = 'character', comment.char = ';')
+```
+
+## use this to interactively add words
+
+```{r, error=TRUE}
+surewords = c(surewords, '[add words here')
+```
+
+# get word occurrence summary
+```{r, error=TRUE}
+surecount<-plosword(surewords, vis = 'TRUE')
+unsurecount<-plosword(unsurewords, vis = 'TRUE')
+
+surecount_df<-surecount$table
+unsurecount_df<-unsurecount$table
+```
+
+
+
+# get everything for a given term
+
+```{r}
+geteverything<-function(surewords){
+  out<-searchplos(surewords, 'id, title, subject, pagecount, publication_date, author, article_type, body,', 100)
+}
+
+makedf_everything<-function(sureword_everything_list){
+  out<-data.frame(sureword_everything_list)
+}
+```
+
+#count terms
+
+```{r}
+countterms<-function(sureword_everything_df){
+  out<-length(grep(surewords, sureword_everything_df$body))
+}
+```
+
+```{r, error=TRUE}
+sureword_everything_list<-llply(surewords, geteverything, .progress = 'text')
+sureword_everything_df<-ldply(sureword_everything_list, makedf, .progress = 'text')
+```
+
+remove stuff
+
+```{r, error=TRUE}
+source_filtered_df<-subset(tweets_df, tweets_df$statusSource !="&lt;a href=&quot;http://www.mendeley.com&quot; rel=&quot;nofollow&quot;&gt;Mendeley&lt;/a&gt;")
+sureword_everything_df[,1]<-NULL
+sureword_everything_df$pagecount<-strtrim(sureword_everything_df$pagecount, 3)
+sureword_everything_df$id<-strtrim(sureword_everything_df$id, 29)
+sureword_everything_df$publication_date<-strtrim(sureword_everything_df$publication_date, 10)
+```
+
+convert numbers to numbers and dates to date
+
+```{r, error=TRUE}
+sureword_everything_df$publication_date<-strptime(sureword_everything_df$publication_date, format = "%Y-%m-%d")
+sureword_everything_df$pagecount<-as.numeric(sureword_everything_df$pagecount)
+sureword_everything_df$body<-gsub('[[:cntrl:]]', '', sureword_everything_df$body)
+sureword_everything_df$figure_table_caption<-gsub('[[:cntrl:]]', '', sureword_everything_df$figure_table_caption)
+sureword_everything_df$materials_and_methods<-gsub('[[:cntrl:]]', '', sureword_everything_df$materials_and_methods)
+sureword_everything_df$results_and_discussion<-gsub('[[:cntrl:]]', '', sureword_everything_df$results_and_discussion)
+sureword_everything_df$introduction<-gsub('[[:cntrl:]]', '', sureword_everything_df$introduction)
+sureword_everything_df$body<-tolower(sureword_everything_df$body)
+sureword_everything_df$figure_table_caption<-tolower(sureword_everything_df$figure_table_caption)
+sureword_everything_df$materials_and_methods<-tolower(sureword_everything_df$materials_and_methods)
+sureword_everything_df$results_and_discussion<-tolower(sureword_everything_df$results_and_discussion)
+sureword_everything_df$introduction<-tolower(sureword_everything_df$introduction)
+
+```
+
+## count occurences of sure words/phrases
+
+```{r, error=TRUE}
+surewordcount<-data.frame(1)
+for(j in 1:length(sureword_everything_df$body)){
+  for(i in 1:length(surewords)){
+    surewordcount[j,i]<-length(grep(surewords[i], sureword_everything_df$body[j]))
+  }
+}
+colnames(surewordcount)[1:32]<-surewords
+```
+
+## count occurences of unsure words/phrases (sure phrases may be preceded by a negation)
+
+```{r, error=TRUE}
+unsurewordcount<-data.frame(1)
+for(j in 1:length(sureword_everything_df$body)){
+for(i in 1:length(unsurewords)){
+unsurewordcount[j,i]<-length(grep(unsurewords[i], sureword_everything_df$body[j]))
+}
+}
+colnames(unsurewordcount)[1:32]<-unsurewords
+
+wordcount<-surewordcount-unsurewordcount
+```
+
+
+## add a column to main df
+
+```{r, error=TRUE}
+for(i in 1:length(wordcount[,1])){
+sureword_everything_df$sureness[i]<-sum(wordcount[i,])
+}
+```
+
+
+#filter out neutral sentiment
+
+```{r, error=TRUE}
+strong_sentiment<-sureword_everything_df[sureword_everything_df$sureness > 1 | sureword_everything_df$sureness < (-1),]
+strong_sentiment<-sureword_everything_df[sureword_everything_df$sureness != 0,]
+strong_sentiment<-droplevels(strong_sentiment)
+```
+
+
+## Mendeley needs the DOIs URLencoded
+
+```{r, error= TRUE}
+dois<-gsub('/', '%252F', strong_sentiment$id)
+```
+
+## add readers column to strong_sentiment
+
+```{r, error=TRUE}
+strong_sentiment$readers<-NA
+for {
+if (class(try(...,silent=T))=="try-error") result[[i]] <- NA
+...
+} 
+
+for(i in 1:length(dois))
+{
+if(i%%50 == 0)
+{
+Sys.sleep(1)
+}
+else if(class(try(strong_sentiment$readers[i]<-details(dois[i], type = "doi")$stats$readers, silent=T))=="try-error") 
+{
+strong_sentiment$readers[i]<-NA
+print("NA")
+}
+}
+```
+
+
+## add previously scored papers to newly fetched ones TODO
+
+```{r, error=TRUE}
+sentiment_score = score.sentiment(source_filtered_df$text, poswords, negwords, .progress = 'text')
+paper_sentiment<-merge(source_filtered_df, sentiment_score, by = "text")
+```
+
+
+## filter noise
+
+```{r, error=TRUE}
+pos_sentiment<-subset(paper_sentiment, paper_sentiment$score >=2)
+neg_sentiment<-subset(paper_sentiment, paper_sentiment$score <=-2)
+strong_sentiment<-rbind(droplevels(pos_sentiment), droplevels(neg_sentiment))
+```
+
+
+## DATA Visualization
+
+
+```{r, error=TRUE}
+surebarplot<-ggplot(surecount_df, aes(x = reorder(Term, No_Articles), y = No_Articles)) + geom_bar() + coord_flip()
+print(surebarplot)
+unsurebarplot<-ggplot(unsurecount_df, aes(x = reorder(Term, No_Articles), y = No_Articles)) + geom_bar() + coord_flip()
+print(unsurebarplot)
+
+surenessvsreadership_plot<-ggplot(strong_sentiment, aes(x = sureness, y = readers)) + stat_boxplot(position = "dodge")
+print(surenessvsreadership_plot)
+
+strong_sentiment_no_body<-strong_sentiment[,-c(3:8)]
+```
