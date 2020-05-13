@@ -109,6 +109,40 @@ ggplot(df_new, aes(x= log(population) , y= log(cases), label=location))+
   geom_point() +geom_text(aes(label=location),hjust=0, vjust=0, size=4)
 ```
 
+```{r}
+linearMod <- lm(population ~ cases, data=df_new)  # build linear regression model on full data
+print(linearMod)
+```
+
+```{r}
+cor.test(df_new$population, df_new$cases)
+```
+
+If the p Value is less than 0.05 and the cor test reult is 0.9404415, we reject the null hypothesis that the true correlation is zero (i.e. they are independent). Here, we reject the null hypothesis and conclude that cases is dependent on population.
+
+```{r}
+AIC(linearMod)
+BIC(linearMod)
+```
+The Akaike’s information criterion - AIC (Akaike, 1974) and the Bayesian information criterion - BIC (Schwarz, 1978) are measures of the goodness of fit of an estimated statistical model and can also be used for model selection. Both criteria depend on the maximized value of the likelihood function L for the estimated model. Here, they are both quite high, indicating a poor fit.
+
+```{r}
+summary(linearMod)
+```
+
+Based on the linear model, the slope is positive, indicating a relationship between the `population` and number of `cases`. The $R^2$ is 0.8844, adjusted $R^2$ is 0.8839, the p value is far less than 0.5. However, there are many outliers in both variables.
+
+```{r}
+outlier_values <- boxplot.stats(df_new$cases)$out
+outlier_values
+```
+
+```{r}
+outlier_values <- boxplot.stats(df_new$population)$out
+outlier_values
+```
+
+
 ## Top 20 Countries Ranked
 
 ```{r}
@@ -169,4 +203,4 @@ ggplot()+
 
 ## Conclusion
 
-Based on the graphs and tables above there does appear to be some relationship between the population and the number of worlwide COVID-19 cases. However, this is observational. Due to several other factors, including pre-existing health conditions we cannot confirm this hypothesis.
+Based on the graphs and tables above there does appear to be some relationship between the population and the number of worlwide COVID-19 cases. However, this is just an observational study, as many variables were removed. Due to several other factors, including pre-existing health conditions and age, etc., we cannot confirm this hypothesis.
