@@ -1,0 +1,172 @@
+---
+title: "DATA 607 Final Project"
+author: "Vanita Thompson"
+date: "5/13/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Total COVID-19 Cases vs Population
+
+## Introduction
+
+In this project I will analyze the relationship between the Novel Coronavirus (COVID-19)and population around the world, to demonstrate dataprocessing and visualisation with R, tidyverse and ggplot2.
+
+## Loading Libraries
+
+```{r}
+library(magrittr) # pipe operations
+library(tidyverse) # ggplot2, tidyr, dplyr...
+library(gridExtra) # multiple grid-based plots on a page
+library(ggforce) # accelerating ggplot2
+library(kableExtra) # complex tables
+library(leaflet) # map
+library(ggrepel)
+```
+
+## Data
+
+The data source used for this analysis is from Our World in Data github repository found here:
+<link> https://github.com/owid/covid-19-data/blob/master/public/data/owid-covid-data.csv 
+
+
+## Load Data in R
+
+At first, the dataset, which is a CSV files, is downloaded and saved as local files and then are loaded
+into R from github.
+
+```{r}
+url <- 'https://raw.githubusercontent.com/Vthomps000/DATA607_VT/Final-Project/owid-covid-data.csv'
+COVID19 <- read.csv(url)
+c19 <- data.frame(COVID19)
+head(c19)
+```
+
+```{r}
+glimpse(c19)
+```
+
+The dataset has 171013 rows and 29 columns shown above.
+
+## Data Cleaning
+
+For this analysis I will be specifically looking at `location`,`total_cases`, and `population`.
+
+```{r}
+c19_2<- c19 %>%
+  select(location, total_cases, population) %>%
+  arrange(location)
+```
+
+The csv file entries were configured by date, causing duplicate entries for `location`. I collapsed all row entries by the number of `total_cases`.
+
+
+```{r}
+c19_3 <- count(c19_2, location, wt= total_cases)
+names(c19_3)[names(c19_3) == "n"] <- "cases"
+```
+
+## Merging Datasets
+
+Here, I merged the dataframes to regain the `population` column. Next I removed and replaced, `total_cases` with the column `cases` I created above.
+
+```{r}
+c19_4 <- merge(c19_2,c19_3, all.x = TRUE, all.y = TRUE)
+```
+
+```{r}
+c19_5 <- c19_4 %>%
+  select(-total_cases)
+```
+
+Here, I removed all the duplicate entries and row names.
+
+```{r}
+df_new <- unique(c19_5)
+```
+
+```{r}
+rownames(df_new) <- c()
+```
+
+Now, I have a tidied dataset to work with.
+
+```{r}
+kable(df_new) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+ 
+## Data Analysis and Visualization
+
+I wanted to take a look at the trends of all the available countries in the data set. However, that contained a large number of rows, so I decided to rank the top 20 countries by both `cases`, and `population` for comparison.
+
+
+```{r}
+ggplot(df_new, aes(x= log(population) , y= log(cases), label=location))+
+  geom_point() +geom_text(aes(label=location),hjust=0, vjust=0, size=4)
+```
+
+## Top 20 Countries Ranked
+
+```{r}
+## ranking by confirmed cases
+df_20 <- df_new %>% 
+select(location, population, cases) %>%
+mutate(ranking = dense_rank(desc(cases)))
+k <- 20
+## top 20 countries: 21 incl. 'World'
+top.countries <- df_20 %>% filter(ranking <= k + 1) %>%
+arrange(ranking)
+```
+
+```{r}
+kable(top.countries) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+
+
+```{r}
+## ranking by population
+df2_20 <- df_new %>% 
+select(location, population, cases) %>%
+mutate(ranking = dense_rank(desc(population)))
+k <- 20
+## top 20 countries: 21 incl. 'World'
+top.countriespop <- df2_20 %>% filter(ranking <= k + 1) %>%
+arrange(ranking)
+```
+
+```{r}
+kable(top.countriespop) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+
+
+
+```{r}
+ggplot(top.countries, aes(x= log(population) , y= log(cases), label=location))+
+  geom_point() +geom_text(aes(label=location),hjust=0, vjust=0, size=4)
+```
+
+```{r}
+ggplot(top.countriespop, aes(x= log(population) , y= log(cases), label=location))+
+  geom_point() +geom_text(aes(label=location),hjust=0, vjust=0, size=4)
+```
+
+
+
+```{r}
+ggplot()+
+  geom_point(data = top.countries, aes(x = log(population), y = log(cases), color = "blue"))+
+  geom_text(data = top.countries, aes(x = log(population), y = log(cases), label= location, color = "blue"))+
+  geom_point(data = top.countriespop, aes(x = log(population), y = log(cases), color = "red"), show.legend = TRUE)+
+  geom_text(data = top.countriespop, aes(x = log(population), y = log(cases), label= location, color = "red"))+
+  scale_color_manual(values = c("blue","red"), labels = c("top.countries","top.countriespop"), name = "")
+```
+
+## Conclusion
+
+Based on the graphs and tables above there does appear to be some relationship between the population and the number of worlwide COVID-19 cases. However, this is observational. Due to several other factors, including pre-existing health conditions we cannot confirm this hypothesis.
