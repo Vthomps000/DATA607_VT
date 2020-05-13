@@ -130,7 +130,23 @@ The Akaike’s information criterion - AIC (Akaike, 1974) and the Bayesian infor
 summary(linearMod)
 ```
 
-Based on the linear model, the slope is positive, indicating a relationship between the `population` and number of `cases`. The $R^2$ is 0.8844, adjusted $R^2$ is 0.8839, the p value is far less than 0.5. However, there are many outliers in both variables.
+The mean of residuals is close to 0.
+
+```{r}
+mod <- lm(population ~ cases, data=df_new)
+mean(mod$residuals)
+```
+
+
+
+```{r}
+mod2 <- lm(population ~ cases, data=df_new[1:211, ])  #  linear model
+plot(mod2)
+```
+The Q-Q plot the points fall along a line in the middle of the graph, but curve off in the extremities, this indicates that the data has more extreme values than would be expected if they truly came from a Normal distribution. The distribution appears not normal.
+
+
+Based on the linear model, the slope is positive, indicating a relationship between the `population` and number of `cases`. The $R^2$ is 0.8844, adjusted $R^2$ is 0.8839, the p value is far less than 0.5. However, there are many outliers in both variables, that standard error is very high, and 4 variables were deleted due to NA values..
 
 ```{r}
 outlier_values <- boxplot.stats(df_new$cases)$out
@@ -200,6 +216,8 @@ ggplot()+
   geom_text(data = top.countriespop, aes(x = log(population), y = log(cases), label= location, color = "red"))+
   scale_color_manual(values = c("blue","red"), labels = c("top.countries","top.countriespop"), name = "")
 ```
+
+
 
 ## Conclusion
 
